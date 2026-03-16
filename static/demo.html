@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulated Checkout - Webhook Demo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      max-width: 420px;
+      margin: 2rem auto;
+      padding: 1.5rem;
+      background: #1a1a2e;
+      color: #eee;
+      border-radius: 12px;
+    }
+    h1 { font-size: 1.25rem; margin-bottom: 0.5rem; color: #7c3aed; }
+    .sub { font-size: 0.85rem; color: #888; margin-bottom: 1.5rem; }
+    label { display: block; margin-top: 1rem; font-size: 0.9rem; }
+    input, select, button {
+      width: 100%;
+      padding: 0.6rem;
+      margin-top: 0.3rem;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #252540;
+      color: #eee;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 1.5rem;
+      background: #7c3aed;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: #8b5cf6; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .preset { display: flex; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap; }
+    .preset button {
+      width: auto; margin: 0; padding: 0.4rem 0.8rem;
+      font-size: 0.85rem; background: #333;
+    }
+    .preset button:hover { background: #444; }
+    .result {
+      margin-top: 1rem;
+      padding: 0.8rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .result.success { background: #064e3b; color: #6ee7b7; display: block; }
+    .result.error { background: #7f1d1d; color: #fca5a5; display: block; }
+    .order-id { font-family: monospace; font-size: 0.8rem; color: #a5b4fc; }
+  </style>
+</head>
+<body>
+  <h1>Simulated Checkout</h1>
+  <p class="sub">Webhook Demo · Discord receives alert when amount &gt; 1000</p>
+
+  <form id="form">
+    <label>API Key (match .env)</label>
+    <input type="password" id="apiKey" placeholder="Copy API_KEY from .env" required>
+
+    <label>Order ID</label>
+    <input type="text" id="orderId" value="ORD-DEMO-001" placeholder="ORD-001">
+
+    <label>Amount</label>
+    <div class="preset">
+      <button type="button" data-amount="500">500</button>
+      <button type="button" data-amount="1500">1500</button>
+      <button type="button" data-amount="5000">5000</button>
+    </div>
+    <input type="number" id="amount" value="1500" min="0.01" step="0.01">
+
+    <label>Customer Name</label>
+    <input type="text" id="customerName" value="Alice Chen" placeholder="Customer name">
+
+    <button type="submit" id="submitBtn">Submit Order</button>
+  </form>
+
+  <div id="result" class="result"></div>
+
+  <script>
+    const form = document.getElementById('form');
+    const result = document.getElementById('result');
+    const submitBtn = document.getElementById('submitBtn');
+
+    document.querySelectorAll('.preset button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('amount').value = btn.dataset.amount;
+      });
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      result.className = 'result';
+      result.textContent = 'Sending...';
+
+      const payload = {
+        order_id: document.getElementById('orderId').value.trim(),
+        amount: parseFloat(document.getElementById('amount').value),
+        customer_name: document.getElementById('customerName').value.trim(),
+      };
+
+      try {
+        const res = await fetch('/webhook/order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-KEY': document.getElementById('apiKey').value,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok) {
+          result.className = 'result success';
+          let msg = data.discord_alert_sent ? 'Discord alert sent' : (data.duplicate ? 'Duplicate order, skipped' : '(Below threshold, no alert)');
+          result.innerHTML = `✓ Order received<br><span class="order-id">${payload.order_id}</span> · $${payload.amount.toLocaleString()}<br>${msg}`;
+        } else {
+          result.className = 'result error';
+          result.textContent = data.detail || `Error ${res.status}`;
+        }
+      } catch (err) {
+        result.className = 'result error';
+        result.textContent = 'Connection failed. Ensure service is running (uvicorn main:app)';
+      }
+      submitBtn.disabled = false;
+    });
+  </script>
+</body>
+</html>
