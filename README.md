@@ -1,5 +1,11 @@
 # Enterprise Webhook Automation Hub
 
+[![CI](https://github.com/Lucien0420/Enterprise-Webhook-Automation-Hub/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Lucien0420/Enterprise-Webhook-Automation-Hub/actions/workflows/ci.yml)
+
+**Repository:** [github.com/Lucien0420/Enterprise-Webhook-Automation-Hub](https://github.com/Lucien0420/Enterprise-Webhook-Automation-Hub)
+
+**Traditional Chinese (繁體中文):** [README_zh-TW.md](./README_zh-TW.md)
+
 ## Overview
 
 **Enterprise Webhook Automation Hub** is a lightweight webhook receiver for **order monitoring and automated alerts**.
@@ -110,7 +116,7 @@ pytest tests/ -v
 
 ### 6. Demo Video
 
-📹 [Watch walkthrough](docs/demo.mp4)
+**Demo video (YouTube):** [Watch on YouTube](https://youtu.be/X0hFKMLyuGg) — screen recording of `uvicorn main:app` with FastAPI Swagger UI authentication, automated Discord alerts triggered by `scripts/demo_orders.py`, and a peek at the SQLite database (`webhook_orders.db`) for idempotency verification.
 
 ---
 
